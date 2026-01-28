@@ -32,4 +32,5 @@ body {
 
 input, select, textarea {
   padding: 6px;
+  margin: 2%;
 }

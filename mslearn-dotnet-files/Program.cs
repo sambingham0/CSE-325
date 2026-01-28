@@ -24,7 +24,8 @@ IEnumerable<string> FindFiles(string folderName)
     foreach (var file in foundFiles)
     {
         var extension = Path.GetExtension(file);
-        if (extension == ".json")
+        var fileName = Path.GetFileName(file);
+        if (extension == ".json" && fileName.Equals("sales.json", StringComparison.OrdinalIgnoreCase))
         {
             salesFiles.Add(file);
         }
@@ -58,7 +59,8 @@ void GenerateSalesSummaryReport(IEnumerable<string> salesFiles, string outputDir
         SalesData? data = JsonConvert.DeserializeObject<SalesData?>(salesJson);
         double fileTotal = data?.Total ?? 0;
         totalSales += fileTotal;
-        salesDetails.Add((Path.GetFileName(file), fileTotal));
+        string relativePath = Path.GetRelativePath(storesDirectory, file);
+        salesDetails.Add((relativePath, fileTotal));
     }
 
     // report
