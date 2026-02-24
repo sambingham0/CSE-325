@@ -1,0 +1,135 @@
+@inject GameState State
+@using System.Drawing
+
+<HeadContent>
+    <style>
+        :root {
+            --board-bg: @ColorTranslator.ToHtml(BoardColor);
+            --player1: @ColorTranslator.ToHtml(Player1Color);
+            --player2: @ColorTranslator.ToHtml(Player2Color);
+        }
+    </style>
+</HeadContent>
+
+
+<nav>
+    @for (byte i = 0; i < 7; i++)
+    {
+        var col = i;
+        <span title="Click to play a piece" @onclick="() => PlayPiece(col)">🔽</span>
+    }
+</nav>
+
+<article>
+    @winnerMessage  <button style="@ResetStyle" @onclick="ResetGame">Reset the game</button>
+    <br />
+    <span class="alert-danger">@errorMessage</span>
+    <span class="alert-info">@CurrentTurn</span>
+</article>
+
+<div>
+    <div class="board">
+    @for (var i = 0; i < 42; i++)
+    {
+        <span class="container">
+            <span></span>
+        </span>
+    }
+    </div>
+    @for (var i = 0; i < 42; i++)
+    {
+       <span class="@pieces[i]"></span>
+    }
+</div>
+
+<div style="display: flex; justify-content: space-around; margin-top: 20px;">
+    <div>
+        <h3>Player 1 (Wins: @player1Wins)</h3>
+        <p>Moves: @player1Moves</p>
+    </div>
+    <div>
+        <h3>Player 2 (Wins: @player2Wins)</h3>
+        <p>Moves: @player2Moves</p>
+    </div>
+</div>
+
+@code {
+    private string[] pieces = new string[42];
+    private string winnerMessage = string.Empty;
+    private string errorMessage = string.Empty;
+    private int player1Moves = 0;
+    private int player2Moves = 0;
+    private int player1Wins = 0;
+    private int player2Wins = 0;
+
+    private string CurrentTurn => (winnerMessage == string.Empty) ? $"Player {State.PlayerTurn}'s Turn" : "";
+    private string ResetStyle => (winnerMessage == string.Empty) ? "display: none;" : "";
+    private void PlayPiece(byte col)
+    {
+        errorMessage = string.Empty;
+        try
+        {
+            var player = State.PlayerTurn;
+            var turn = State.CurrentTurn;
+            var landingRow = State.PlayPiece(col);
+            pieces[turn] = $"player{player} col{col} drop{landingRow}";
+            
+            if (player == 1)
+            {
+                player1Moves++;
+            }
+            else
+            {
+                player2Moves++;
+            }
+
+            var winState = State.CheckForWin();
+            if (winState == GameState.WinState.Player1_Wins)
+            {
+                player1Wins++;
+                winnerMessage = "Player 1 Wins!";
+            }
+            else if (winState == GameState.WinState.Player2_Wins)
+            {
+                player2Wins++;
+                winnerMessage = "Player 2 Wins!";
+            }
+            else if (winState == GameState.WinState.Tie)
+            {
+                winnerMessage = "It's a tie!";
+            }
+            else
+            {
+                winnerMessage = "";
+            }
+        }
+        catch (ArgumentException ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+
+    [Parameter]
+    public Color BoardColor { get; set; } = ColorTranslator.FromHtml("yellow");
+
+    [Parameter]
+    public Color Player1Color { get; set; } = ColorTranslator.FromHtml("red");
+
+    [Parameter]
+    public Color Player2Color { get; set; } = ColorTranslator.FromHtml("blue");
+
+    protected override void OnInitialized()
+    {
+        State.ResetBoard();
+    }
+
+    void ResetGame()
+    {
+        State.ResetBoard();
+        winnerMessage = string.Empty;
+        errorMessage = string.Empty;
+        pieces = new string[42];
+        player1Moves = 0;
+        player2Moves = 0;
+    }
+}
